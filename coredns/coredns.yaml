@@ -51,16 +51,13 @@ data:
         health {
           lameduck 5s
         }
-        ready
         kubernetes cluster.local. in-addr.arpa ip6.arpa {
           pods insecure
           upstream
           fallthrough in-addr.arpa ip6.arpa
         }
         prometheus :9153
-        forward . /etc/resolv.conf {
-          max_concurrent 1000
-        }
+        forward . /etc/resolv.conf
         cache 30
         loop
         reload
@@ -111,7 +108,7 @@ spec:
                topologyKey: kubernetes.io/hostname
       containers:
       - name: coredns
-        image: hkccr.ccs.tencentyun.com/library/coredns:1.6.9
+        image: hkccr.ccs.tencentyun.com/library/coredns:1.6.2
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -151,11 +148,6 @@ spec:
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 5
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8181
-            scheme: HTTP
       dnsPolicy: Default
       volumes:
         - name: config-volume
@@ -181,12 +173,9 @@ spec:
   selector:
     k8s-app: kube-dns
   ports:
-  - name: dns
-    port: 53
-    protocol: UDP
   - name: dns-tcp
     port: 53
     protocol: TCP
-  - name: metrics
-    port: 9153
-    protocol: TCP
+  - name: dns
+    port: 53
+    protocol: UDP
