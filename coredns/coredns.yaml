@@ -12,7 +12,7 @@ metadata:
   name: system:coredns
 rules:
 - apiGroups:
-  - ""
+  - "*"
   resources:
   - endpoints
   - services
@@ -52,18 +52,20 @@ data:
           lameduck 5s
         }
         ready
-        kubernetes CLUSTER_DOMAIN REVERSE_CIDRS {
+        kubernetes cluster.local. in-addr.arpa ip6.arpa {
+          pods insecure
+          upstream
           fallthrough in-addr.arpa ip6.arpa
         }
         prometheus :9153
-        forward . UPSTREAMNAMESERVER {
+        forward . /etc/resolv.conf {
           max_concurrent 1000
         }
         cache 30
         loop
         reload
         loadbalance
-    }STUBDOMAINS
+    }
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -74,7 +76,7 @@ metadata:
     k8s-app: kube-dns
     kubernetes.io/name: "CoreDNS"
 spec:
-  # replicas: not specified here:
+  replicas: 2
   # 1. Default is 1.
   # 2. Will be tuned in real time if DNS horizontal auto-scaling is turned on.
   strategy:
@@ -109,7 +111,7 @@ spec:
                topologyKey: kubernetes.io/hostname
       containers:
       - name: coredns
-        image: coredns/coredns:1.7.0
+        image: hkccr.ccs.tencentyun.com/library/coredns:1.6.9
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -178,7 +180,6 @@ metadata:
 spec:
   selector:
     k8s-app: kube-dns
-  clusterIP: CLUSTER_DNS_IP
   ports:
   - name: dns
     port: 53
